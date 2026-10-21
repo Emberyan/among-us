@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Entre nous — partage anonyme</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#2a2622;--mute:#7a7167;--line:#e6dfd5;--accent:#b8532e;--on:#fff;--soft:#f3ece2;--err:#a32a2a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1c1a18;--card:#262320;--ink:#f1ebe3;--mute:#a79d91;--line:#3a352f;--accent:#e0805a;--on:#1c1a18;--soft:#2f2b27;--err:#ff9a9a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#1c1a18;--card:#262320;--ink:#f1ebe3;--mute:#a79d91;--line:#3a352f;--accent:#e0805a;--on:#1c1a18;--soft:#2f2b27;--err:#ff9a9a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:680px;margin:0 auto;padding:28px 18px 48px}
+h1,h2,h3{font-family:"Iowan Old Style",Georgia,"Times New Roman",serif;line-height:1.25;margin:0}
+h1{font-size:2rem}
+.sub{color:var(--mute);margin:.4rem 0 1.2rem}
+#notice{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-size:.92rem}
+.btn{font:inherit;font-weight:600;border:0;border-radius:999px;padding:10px 20px;background:var(--accent);color:var(--on);cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--accent);padding:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
+.card[role=button]{cursor:pointer}
+.card[role=button]:hover,.card[role=button]:focus-visible{border-color:var(--accent);outline:none}
+.pill{display:inline-block;font-size:.75rem;font-weight:600;color:var(--accent);background:var(--soft);border-radius:999px;padding:2px 10px;margin-bottom:6px}
+.meta{color:var(--mute);font-size:.82rem}
+.card h3{font-size:1.12rem;margin-bottom:4px}
+.card p{margin:.3rem 0 .5rem;overflow-wrap:anywhere}
+.full{white-space:pre-wrap}
+label{display:block;font-weight:600;font-size:.9rem;margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.hint{color:var(--mute);font-size:.82rem;margin:6px 0 12px}
+.err{color:var(--err);font-size:.88rem;min-height:1.2em;margin:6px 0}
+.comment{border-left:3px solid var(--line);padding:2px 0 2px 14px;margin:14px 0}
+.comment p{margin:.2rem 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.ro .writer{display:none}
+.empty{color:var(--mute);text-align:center;padding:28px 0}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);color:var(--mute);font-size:.85rem}
+.acts{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.lnk{font:inherit;font-size:.82rem;background:none;border:0;padding:0;color:var(--mute);text-decoration:underline;cursor:pointer}
+.lnk.danger{color:var(--err)}
+.flag{font-size:.75rem;font-weight:600;color:var(--err);margin-left:8px}
+.tabs{display:flex;gap:8px;margin:18px 0 4px}
+.tab{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:4px 14px;cursor:pointer}
+.tab[aria-pressed=true]{background:var(--accent);color:var(--on);border-color:var(--accent)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Entre nous</h1>
+  <p class="sub">Déposez ce qui vous pèse, sans nom et sans visage. Les autres peuvent vous répondre avec bienveillance.</p>
+  <div id="notice" hidden></div>
+
+  <section id="v-list">
+    <button class="btn writer" id="open-form">Partager un problème</button>
+    <form class="card writer" id="pform" hidden onsubmit="return false">
+      <label for="p-cat">Thème</label>
+      <select id="p-cat"></select>
+      <label for="p-title">Titre</label>
+      <input id="p-title" maxlength="100" placeholder="En une phrase…">
+      <label for="p-body">Votre message</label>
+      <textarea id="p-body" maxlength="3000" placeholder="Racontez à votre rythme."></textarea>
+      <p class="hint">Ne mentionnez aucun nom, lieu ou détail qui permettrait de vous reconnaître.</p>
+      <div class="err" id="p-err"></div>
+      <button class="btn" id="p-send">Publier anonymement</button>
+    </form>
+    <div class="tabs" id="tabs" hidden><button class="tab" id="t-all" aria-pressed="true">Tous</button><button class="tab" id="t-rep" aria-pressed="false">Signalés</button></div>
+    <div id="list"></div>
+  </section>
+
+  <section id="v-thread" hidden>
+    <button class="btn ghost" id="back">← Retour</button>
+    <article class="card" id="tpost"></article>
+    <h2 id="ccount" style="font-size:1.15rem;margin-top:22px"></h2>
+    <div id="clist"></div>
+    <form class="writer" id="cform" onsubmit="return false">
+      <label for="c-body">Votre réponse</label>
+      <textarea id="c-body" maxlength="1500" style="min-height:90px" placeholder="Soyez doux·ce et bienveillant·e."></textarea>
+      <div class="err" id="c-err"></div>
+      <button class="btn" id="c-send">Répondre anonymement</button>
+    </form>
+  </section>
+
+  <footer>
+    Ici, aucun nom, compte ou pseudonyme n’est demandé ni conservé. Les messages signalés sont examinés par l’équipe de modération. Ce site ne remplace pas une aide professionnelle.
+    En cas de détresse, appelez ou textez le 9-8-8 (partout au Canada) ou le 1 866 APPELLE (Québec), 24 h sur 24.
+  </footer>
+</div>
+<script>
+(function(){
+var CATS=["Travail","Famille","Amis","Amour","École","Santé","Autre"];
+var db=null,local=false,posts=[],comments=[],cur=null,unC=null,isMod=false,filt="all";
+var $=function(s){return document.querySelector(s)};
+function h(t,a,k){var e=document.createElement(t);for(var x in a||{}){if(x==="class")e.className=a[x];else if(x==="text")e.textContent=a[x];else e.setAttribute(x,a[x])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);if(s<60)return "à l’instant";var m=s/60;if(m<60)return "il y a "+Math.floor(m)+" min";var hr=m/60;if(hr<24)return "il y a "+Math.floor(hr)+" h";var d=hr/24;if(d<30)return "il y a "+Math.floor(d)+" j";return new Date(ts).toLocaleDateString("fr-CA")}
+var LS={get:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function note(m){var n=$("#notice");n.textContent=m||"";n.hidden=!m}
+function uid(){return "l"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function meta(x){var m=h("div",{class:"meta",text:"Anonyme · "+ago(x.createdAt||0)});var f=x.reported?"Signalé":(x.cflag?"Réponse signalée":"");if(isMod&&f)m.appendChild(h("span",{class:"flag",text:f}));return m}
+function act(label,cls,fn,two){var b=h("button",{class:"lnk "+cls,type:"button",text:label}),armed=false,t;
+  b.addEventListener("click",async function(){
+    if(two&&!armed){armed=true;b.textContent="Confirmer ?";t=setTimeout(function(){armed=false;b.textContent=label},4000);return}
+    clearTimeout(t);b.disabled=true;
+    try{await fn()}catch(e){b.disabled=false;note("L’action a échoué. Réessayez dans un instant.")}});
+  return b}
+function actions(x,rep,clr,del){var d=h("div",{class:"acts"});
+  if(!x.reported)d.appendChild(act("Signaler","writer",rep,false));
+  else if(!isMod)d.appendChild(h("span",{class:"meta writer",text:"Déjà signalé"}));
+  if(isMod){if(x.reported)d.appendChild(act("Ignorer le signalement","",clr,false));d.appendChild(act("Supprimer","danger",del,true))}
+  return d}
+function cpath(x){return "posts/"+cur.id+"/comments/"+x.id}
+function noFlagLeft(c){return !comments.some(function(k){return k.id!==c.id&&k.reported})}
+async function flagPost(p,v){
+  if(local){p.reported=v;LS.set("ee:p",posts);renderList();if(cur)renderThreadPost();return}
+  await db.doc("posts/"+p.id).update({reported:v})}
+async function flagComment(c,v){
+  if(local){var all=LS.get("ee:c",{}),a=all[cur.id]||[];a.forEach(function(k){if(k.id===c.id)k.reported=v});LS.set("ee:c",all);if(v){cur.cflag=true;LS.set("ee:p",posts)}comments=a;renderComments();return}
+  await db.doc(cpath(c)).update({reported:v});
+  if(v)await db.doc("posts/"+cur.id).update({cflag:true});
+  else if(noFlagLeft(c))await db.doc("posts/"+cur.id).update({cflag:false})}
+async function delComment(c){
+  if(local){var all=LS.get("ee:c",{});all[cur.id]=(all[cur.id]||[]).filter(function(k){return k.id!==c.id});LS.set("ee:c",all);comments=all[cur.id];renderComments();return}
+  await db.doc(cpath(c)).delete();
+  if(noFlagLeft(c))await db.doc("posts/"+cur.id).update({cflag:false})}
+async function delPost(p){
+  if(local){posts=posts.filter(function(k){return k.id!==p.id});LS.set("ee:p",posts);var all=LS.get("ee:c",{});delete all[p.id];LS.set("ee:c",all);back();renderList();return}
+  var s=await db.collection("posts/"+p.id+"/comments").limit(1000).get();
+  for(var i=0;i<s.docs.length;i++)await db.doc("posts/"+p.id+"/comments/"+s.docs[i].id).delete();
+  await db.doc("posts/"+p.id).delete()}
+function werr(e,el){var c=e&&e.code,m="L’envoi a échoué. Réessayez dans un instant.";
+  if(c==="invalid_argument"){document.body.classList.add("ro");note("Votre niveau d’accès permet de lire les messages, mais pas d’en publier.");m=""}
+  else if(c==="quota_exceeded")m="Le site a atteint sa capacité maximale pour le moment.";
+  el.textContent=m}
+
+function renderList(){
+  var l=$("#list");l.textContent="";
+  var flagged=posts.filter(function(p){return p.reported||p.cflag});
+  $("#t-rep").textContent="Signalés ("+flagged.length+")";
+  var shown=filt==="rep"?flagged:posts;
+  if(!shown.length){l.appendChild(h("div",{class:"empty",text:filt==="rep"?"Aucun message signalé.":"Aucun message pour l’instant. Soyez la première personne à déposer ce qui vous pèse."}));return}
+  shown.forEach(function(p){
+    var b=String(p.body||"");
+    var c=h("article",{class:"card",role:"button",tabindex:"0"},[
+      h("span",{class:"pill",text:String(p.cat||"Autre")}),
+      h("h3",{text:String(p.title||"")}),
+      h("p",{text:b.length>220?b.slice(0,220)+"…":b}),
+      meta(p)]);
+    c.addEventListener("click",function(){openThread(p)});
+    c.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openThread(p)}});
+    l.appendChild(c)})}
+
+function renderThreadPost(){
+  var t=$("#tpost");t.textContent="";
+  t.appendChild(h("span",{class:"pill",text:String(cur.cat||"Autre")}));
+  t.appendChild(h("h2",{text:String(cur.title||""),style:"font-size:1.35rem"}));
+  t.appendChild(h("p",{class:"full",text:String(cur.body||"")}));
+  t.appendChild(meta(cur));
+  t.appendChild(actions(cur,function(){return flagPost(cur,true)},function(){return flagPost(cur,false)},function(){return delPost(cur)}))}
+
+function renderComments(){
+  var n=comments.length;
+  $("#ccount").textContent=n===0?"Pas encore de réponse":n+(n>1?" réponses":" réponse");
+  var l=$("#clist");l.textContent="";
+  comments.forEach(function(c){l.appendChild(h("div",{class:"comment"},[
+    meta(c),
+    h("p",{text:String(c.body||"")}),
+    actions(c,function(){return flagComment(c,true)},function(){return flagComment(c,false)},function(){return delComment(c)})]))})}
+
+function openThread(p){
+  cur=p;comments=[];renderThreadPost();renderComments();
+  $("#v-list").hidden=true;$("#v-thread").hidden=false;window.scrollTo(0,0);
+  if(unC){unC();unC=null}
+  if(local){comments=(LS.get("ee:c",{})[p.id]||[]);renderComments();return}
+  unC=db.collection("posts/"+p.id+"/comments").orderBy("createdAt","asc").limit(300).onSnapshot(function(s){
+    comments=s.docs.map(function(d){return Object.assign({id:d.id},d.data())});renderComments()},
+    function(){note("Impossible de charger les réponses pour l’instant.")})}
+
+function back(){
+  if(unC){unC();unC=null}
+  cur=null;$("#v-thread").hidden=true;$("#v-list").hidden=false}
+
+async function init(){
+  CATS.forEach(function(c){$("#p-cat").appendChild(h("option",{value:c,text:c}))});
+  renderList();
+  var c=null;
+  try{c=(window.claude&&window.claude.use)?await window.claude.use("db"):null}catch(e){c=null}
+  if(!c){
+    local=true;isMod=true;$("#tabs").hidden=false;posts=LS.get("ee:p",[]);
+    note("Mode local : la base partagée n’est pas disponible ici. Vos messages ne sont visibles que sur cet appareil.");
+    renderList();return}
+  db=c;
+  try{var u=await window.claude.use("user");if(u&&(await u.canEdit()||await u.isOwner())){isMod=true;$("#tabs").hidden=false}}catch(e){}
+  db.collection("posts").orderBy("createdAt","desc").limit(200).onSnapshot(function(s){
+    posts=s.docs.map(function(d){return Object.assign({id:d.id},d.data())});
+    renderList();
+    if(cur){var f=posts.filter(function(p){return p.id===cur.id})[0];if(f){cur=f;renderThreadPost()}else back()}
+  },function(){note("Impossible de charger les messages pour l’instant.")})}
+
+$("#open-form").addEventListener("click",function(){var f=$("#pform");f.hidden=!f.hidden;if(!f.hidden)$("#p-title").focus()});
+$("#back").addEventListener("click",back);
+
+$("#p-send").addEventListener("click",async function(){
+  var err=$("#p-err"),btn=this;err.textContent="";
+  var t=$("#p-title").value.trim(),b=$("#p-body").value.trim(),cat=$("#p-cat").value;
+  if(t.length<3){err.textContent="Ajoutez un titre (3 caractères minimum).";return}
+  if(b.length<10){err.textContent="Votre message est un peu court (10 caractères minimum).";return}
+  btn.disabled=true;
+  var doc={cat:cat,title:t,body:b,createdAt:Date.now()};
+  try{
+    if(local){doc.id=uid();posts.unshift(doc);LS.set("ee:p",posts);renderList()}
+    else await db.collection("posts").add(doc);
+    $("#p-title").value="";$("#p-body").value="";$("#pform").hidden=true;
+  }catch(e){werr(e,err)}
+  btn.disabled=false});
+
+$("#c-send").addEventListener("click",async function(){
+  var err=$("#c-err"),btn=this;err.textContent="";
+  var b=$("#c-body").value.trim();
+  if(b.length<2){err.textContent="Écrivez quelques mots avant d’envoyer.";return}
+  if(!cur)return;
+  btn.disabled=true;
+  var doc={body:b,createdAt:Date.now()};if(local)doc.id=uid();
+  try{
+    if(local){var all=LS.get("ee:c",{});(all[cur.id]=all[cur.id]||[]).push(doc);LS.set("ee:c",all);comments=all[cur.id];renderComments()}
+    else await db.collection("posts/"+cur.id+"/comments").add(doc);
+    $("#c-body").value="";
+  }catch(e){werr(e,err)}
+  btn.disabled=false});
+
+["all","rep"].forEach(function(k){$("#t-"+k).addEventListener("click",function(){filt=k;$("#t-all").setAttribute("aria-pressed",k==="all");$("#t-rep").setAttribute("aria-pressed",k==="rep");renderList()})});
+init();
+})();
+</script>
+</body>
+</html>
